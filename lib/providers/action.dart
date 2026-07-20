@@ -113,12 +113,30 @@ class CommonAction extends _$CommonAction {
 @Riverpod(keepAlive: true)
 class SetupAction extends _$SetupAction {
   Timer? _updateTimer;
+  Timer? _trafficResetTimer;
   DateTime? startTime;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   @override
   void build() {}
+
+  void _clearTraffic() {
+    coreController.resetTraffic();
+    ref.read(trafficsProvider.notifier).clear();
+    ref.read(totalTrafficProvider.notifier).value = const Traffic();
+  }
+
+  void _scheduleTrafficReset() {
+    _trafficResetTimer?.cancel();
+    _trafficResetTimer = Timer(const Duration(seconds: 10), () {
+      _trafficResetTimer = null;
+      // Guard: if the proxy started again between scheduling and firing,
+      // don't wipe the new session's traffic.
+      if (startTime != null) return;
+      _clearTraffic();
+    });
+  }
 
   SetupParams get _setupParams {
     final selectedMap = ref.read(selectedMapProvider);
@@ -137,6 +155,13 @@ class SetupAction extends _$SetupAction {
   }
 
   Future<void> _handleStart() async {
+    // Cancel any pending traffic reset from a previous stop.
+    _trafficResetTimer?.cancel();
+    _trafficResetTimer = null;
+
+    // Clear previous session's traffic before starting a new one.
+    _clearTraffic();
+
     startTime ??= DateTime.now();
     //The local status must be updated when performing the run task
     ref.read(commonActionProvider.notifier).updateRunTime();
@@ -165,6 +190,11 @@ class SetupAction extends _$SetupAction {
     _updateTimer?.cancel();
     _updateTimer = null;
     await coreController.stopListener();
+    // Delay traffic reset by 10 s so the user can still read the
+    // last session's counters before they disappear.
+    _scheduleTrafficReset();
+    ref.read(runTimeProvider.notifier).value = null;
+    ref.read(checkIpNumProvider.notifier).add();
   }
 
   Future<void> initStatus() async {
@@ -212,11 +242,6 @@ class SetupAction extends _$SetupAction {
       }
     } else {
       await handleStop();
-      coreController.resetTraffic();
-      ref.read(trafficsProvider.notifier).clear();
-      ref.read(totalTrafficProvider.notifier).value = const Traffic();
-      ref.read(runTimeProvider.notifier).value = null;
-      ref.read(checkIpNumProvider.notifier).add();
     }
   }
 
