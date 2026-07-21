@@ -6,7 +6,10 @@
 
 ## FlClash
 
-> 🔋 [低功耗优化版](LOWPOWER_README.md) | ✈️ [SSOne](https://m.ssone.io/#/register?code=unpj1Ssm) · [云梯](https://my.yunti2.net/auth/register?code=rViZ)
+> 🔋 **专为 macOS 后台常驻优化** — 窗口隐藏后自动暂停轮询，托盘标题去重减少 UI 刷新，让你的 MacBook 更省电。  
+> 🧩 基于 FlClash v0.8.94，合入多项上游 PR（TUN 修复、99 小时上限、托盘去重等）。  
+> 🍎 **仅支持 Apple Silicon (M1–M4)**，去除 x86_64 切片，体积更小。  
+> 📖 [完整改动 & 构建指南](LOWPOWER_README.md) · ✈️ [SSOne](https://m.ssone.io/#/register?code=unpj1Ssm) · [云梯](https://my.yunti2.net/auth/register?code=rViZ)
 
 [![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 
