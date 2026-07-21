@@ -86,6 +86,11 @@ class AboutView extends StatelessWidget {
         name: 'Arue',
         link: 'https://t.me/xrcm6868',
       ),
+      Contributor(
+        avatar: 'assets/images/avatar/muyu.jpg',
+        name: 'Muyu',
+        link: 'https://github.com/Muyu-Chen',
+      ),
     ];
     return generateSection(
       separated: false,
@@ -160,6 +165,13 @@ class AboutView extends StatelessWidget {
             Text(
               appLocalizations.desc,
               style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "由 Muyu 修改后构建",
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
             ),
           ],
         ),
