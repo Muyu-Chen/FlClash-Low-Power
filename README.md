@@ -4,17 +4,27 @@
 
 </div>
 
-## FlClash
+## FlClash 低功耗版
 
-> 🔋 **FlClash 低功耗优化版** — 基于 v0.8.94，合入多项上游 PR，专为 macOS 长时间后台运行调优。  
-> 📖 [改动记录 & 构建指南](LOWPOWER_README.md)  
+> 🔋 **专为 macOS 后台常驻优化** — 窗口隐藏后自动暂停轮询，托盘标题去重减少 UI 刷新，让你的 MacBook 更省电。  
+> 🧩 基于 FlClash v0.8.94，合入多项上游 PR（TUN 修复、99 小时上限、托盘去重等）。  
+> 🍎 **仅支持 Apple Silicon (M1–M4)**，去除 x86_64 切片，体积更小。
+
+#### 快速开始
+
+1. [**下载最新版**](https://github.com/Muyu-Chen/FlClash-Low-Power/releases) → 打开 DMG → 拖入 Applications  
+2. 首次打开如提示"无法验证开发者"→ **系统设置 → 隐私与安全性 → 仍要打开**  
+3. 导入订阅即可使用
+
+> 📖 [完整改动记录 & 自行构建指南](LOWPOWER_README.md)  
 > ✈️ **需要机场？** [SSOne](https://m.ssone.io/#/register?code=unpj1Ssm) · [云梯](https://my.yunti2.net/auth/register?code=rViZ)
 
+---
+
+FlClash 是一个基于 ClashMeta 的多平台代理客户端，简单易用，开源无广告。
+
 [![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
-
 [![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
-
-A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 
 on Desktop:
 <p style="text-align: center;">
