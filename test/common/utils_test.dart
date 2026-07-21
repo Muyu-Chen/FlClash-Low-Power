@@ -58,8 +58,23 @@ void main() {
       expect(utils.getTimeText(3661000), '01:01:01');
     });
 
-    test('caps at 99:59:59', () {
-      expect(utils.getTimeText(100 * 3600 * 1000), '99:59:59');
+    test('pads hours under 10 with leading zero', () {
+      expect(utils.getTimeText(5 * 3600 * 1000), '05:00:00');
+    });
+
+    test('pads hours under 100 with leading zero', () {
+      expect(utils.getTimeText(99 * 3600 * 1000), '99:00:00');
+    });
+
+    test('no cap beyond 99 hours, no padding', () {
+      expect(utils.getTimeText(100 * 3600 * 1000), '100:00:00');
+    });
+
+    test('grows beyond 99 hours with minutes and seconds', () {
+      expect(
+        utils.getTimeText(128 * 3600 * 1000 + 45 * 60 * 1000 + 30 * 1000),
+        '128:45:30',
+      );
     });
   });
 

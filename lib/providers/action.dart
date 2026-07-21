@@ -119,7 +119,12 @@ class SetupAction extends _$SetupAction {
   bool get isStart => startTime != null && startTime!.isBeforeNow;
 
   @override
-  void build() {}
+  void build() {
+    ref.onDispose(() {
+      _updateTimer?.cancel();
+      _trafficResetTimer?.cancel();
+    });
+  }
 
   Future<void> _clearTraffic() async {
     await coreController.resetTraffic();
