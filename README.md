@@ -6,7 +6,8 @@
 
 ## FlClash
 
-> 📖 **Low-power build**: See [LOWPOWER_README.md](LOWPOWER_README.md)
+> 🔋 **Low-Power Fork** — [Changelog & Build Guide](LOWPOWER_README.md)  
+> ✈️ **Need a proxy?** [SSOne](https://m.ssone.io/#/register?code=unpj1Ssm) · [Yunti](https://my.yunti2.net/auth/register?code=rViZ)
 
 [![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 

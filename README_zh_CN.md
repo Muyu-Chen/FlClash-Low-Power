@@ -6,7 +6,8 @@
 
 ## FlClash
 
-> 📖 **低功耗构建版**：详见 [LOWPOWER_README.md](LOWPOWER_README.md)
+> 🔋 **低功耗 Fork** — [改动记录 & 构建指南](LOWPOWER_README.md)  
+> ✈️ **需要机场？** [SSOne](https://m.ssone.io/#/register?code=unpj1Ssm) · [云梯](https://my.yunti2.net/auth/register?code=rViZ)
 
 [![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 
