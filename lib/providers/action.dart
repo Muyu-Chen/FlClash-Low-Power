@@ -121,20 +121,20 @@ class SetupAction extends _$SetupAction {
   @override
   void build() {}
 
-  void _clearTraffic() {
-    coreController.resetTraffic();
+  Future<void> _clearTraffic() async {
+    await coreController.resetTraffic();
     ref.read(trafficsProvider.notifier).clear();
     ref.read(totalTrafficProvider.notifier).value = const Traffic();
   }
 
   void _scheduleTrafficReset() {
     _trafficResetTimer?.cancel();
-    _trafficResetTimer = Timer(const Duration(seconds: 10), () {
+    _trafficResetTimer = Timer(const Duration(seconds: 10), () async {
       _trafficResetTimer = null;
       // Guard: if the proxy started again between scheduling and firing,
       // don't wipe the new session's traffic.
       if (startTime != null) return;
-      _clearTraffic();
+      await _clearTraffic();
     });
   }
 
@@ -160,7 +160,7 @@ class SetupAction extends _$SetupAction {
     _trafficResetTimer = null;
 
     // Clear previous session's traffic before starting a new one.
-    _clearTraffic();
+    await _clearTraffic();
 
     startTime ??= DateTime.now();
     //The local status must be updated when performing the run task
@@ -190,6 +190,9 @@ class SetupAction extends _$SetupAction {
     _updateTimer?.cancel();
     _updateTimer = null;
     await coreController.stopListener();
+    // Fetch the session's final cumulative totals before scheduling
+    // the delayed reset, so the displayed values are up-to-date.
+    await ref.read(commonActionProvider.notifier).updateTraffic();
     // Delay traffic reset by 10 s so the user can still read the
     // last session's counters before they disappear.
     _scheduleTrafficReset();
