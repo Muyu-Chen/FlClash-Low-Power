@@ -77,3 +77,6 @@ devtools_options.yaml
 
 # FVM Version Cache
 .fvm/
+
+# Codex
+.codex/
