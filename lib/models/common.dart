@@ -132,6 +132,82 @@ extension TrackerInfoExt on TrackerInfo {
     }
     return process.trim();
   }
+
+  TrackerInfo withSpeedFrom(TrackerInfo? previous, Duration elapsed) {
+    if (previous == null || elapsed.inMilliseconds <= 0) {
+      return copyWith(downloadSpeed: 0, uploadSpeed: 0);
+    }
+    final milliseconds = elapsed.inMilliseconds;
+    final downloadDelta = (download - previous.download).clamp(0, download);
+    final uploadDelta = (upload - previous.upload).clamp(0, upload);
+    return copyWith(
+      downloadSpeed:
+          downloadDelta * Duration.millisecondsPerSecond ~/ milliseconds,
+      uploadSpeed: uploadDelta * Duration.millisecondsPerSecond ~/ milliseconds,
+    );
+  }
+}
+
+extension TrackerInfoListExt on List<TrackerInfo> {
+  List<TrackerInfo> sortedBy(ConnectionSortType sortType) {
+    if (sortType == ConnectionSortType.none) {
+      return this;
+    }
+    final sorted = List<TrackerInfo>.from(this);
+    sorted.sort((a, b) {
+      final result = switch (sortType) {
+        ConnectionSortType.none => 0,
+        ConnectionSortType.downloadDesc => (b.downloadSpeed ?? 0).compareTo(
+          a.downloadSpeed ?? 0,
+        ),
+        ConnectionSortType.downloadAsc => (a.downloadSpeed ?? 0).compareTo(
+          b.downloadSpeed ?? 0,
+        ),
+        ConnectionSortType.uploadDesc => (b.uploadSpeed ?? 0).compareTo(
+          a.uploadSpeed ?? 0,
+        ),
+        ConnectionSortType.uploadAsc => (a.uploadSpeed ?? 0).compareTo(
+          b.uploadSpeed ?? 0,
+        ),
+        ConnectionSortType.processAsc => _compareProcess(a, b),
+        ConnectionSortType.processDesc => _compareProcess(
+          a,
+          b,
+          descending: true,
+        ),
+      };
+      return result != 0 ? result : b.start.compareTo(a.start);
+    });
+    return sorted;
+  }
+
+  List<TrackerInfo> orderedByIds(List<String> orderedIds) {
+    if (orderedIds.isEmpty) {
+      return this;
+    }
+    final positions = {
+      for (var index = 0; index < orderedIds.length; index++)
+        orderedIds[index]: index,
+    };
+    final sorted = List<TrackerInfo>.from(this);
+    sorted.sort((a, b) {
+      final aPosition = positions[a.id] ?? orderedIds.length;
+      final bPosition = positions[b.id] ?? orderedIds.length;
+      return aPosition.compareTo(bPosition);
+    });
+    return sorted;
+  }
+}
+
+int _compareProcess(TrackerInfo a, TrackerInfo b, {bool descending = false}) {
+  final aProcess = a.metadata.process.trim();
+  final bProcess = b.metadata.process.trim();
+  if (aProcess.isEmpty != bProcess.isEmpty) {
+    return aProcess.isEmpty ? 1 : -1;
+  }
+  return descending
+      ? utils.sortByChar(bProcess, aProcess)
+      : utils.sortByChar(aProcess, bProcess);
 }
 
 String _logDateTime(dynamic _) {

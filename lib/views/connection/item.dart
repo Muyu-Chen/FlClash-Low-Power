@@ -13,6 +13,7 @@ class TrackerInfoItem extends ConsumerWidget {
   final Function(String)? onClickKeyword;
   final Widget? trailing;
   final String detailTitle;
+  final bool compact;
 
   const TrackerInfoItem({
     super.key,
@@ -20,6 +21,7 @@ class TrackerInfoItem extends ConsumerWidget {
     this.onClickKeyword,
     this.trailing,
     required this.detailTitle,
+    this.compact = false,
   });
 
   static double get subTitleHeight {
@@ -38,8 +40,64 @@ class TrackerInfoItem extends ConsumerWidget {
     return '${trackerInfo.start.getLastUpdateTimeDesc(context)} · $progress${traffic.desc}';
   }
 
+  String _getCompactSourceText(BuildContext context) {
+    final parts = <String>[
+      if (trackerInfo.progressText.isNotEmpty) trackerInfo.progressText,
+      Traffic(
+        up: trackerInfo.uploadSpeed ?? 0,
+        down: trackerInfo.downloadSpeed ?? 0,
+      ).speedText,
+      if (trackerInfo.chains.isNotEmpty) trackerInfo.chains.join(' → '),
+      trackerInfo.start.getLastUpdateTimeDesc(context),
+    ];
+    return parts.join(' · ');
+  }
+
+  void _showDetail(BuildContext context) {
+    showExtend(
+      context,
+      builder: (_) {
+        return AdaptiveSheetScaffold(
+          body: TrackerInfoDetailView(trackerInfo: trackerInfo),
+          title: detailTitle,
+        );
+      },
+    );
+  }
+
+  Widget _buildCompact(BuildContext context) {
+    return ListItem(
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      minVerticalPadding: 2,
+      minTileHeight: 52,
+      padding: const EdgeInsets.only(left: 12, right: 4),
+      onTap: () {
+        _showDetail(context);
+      },
+      trailing: trailing,
+      subtitle: Text(
+        _getCompactSourceText(context),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.textTheme.bodySmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      title: Text(
+        trackerInfo.desc,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.textTheme.bodyMedium,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, ref) {
+    if (compact) {
+      return _buildCompact(context);
+    }
     final value = ref.watch(
       patchClashConfigProvider.select(
         (state) =>
@@ -142,15 +200,7 @@ class TrackerInfoItem extends ConsumerWidget {
     return ListItem(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {
-        showExtend(
-          context,
-          builder: (_) {
-            return AdaptiveSheetScaffold(
-              body: TrackerInfoDetailView(trackerInfo: trackerInfo),
-              title: detailTitle,
-            );
-          },
-        );
+        _showDetail(context);
       },
       title: Column(
         mainAxisSize: MainAxisSize.min,
