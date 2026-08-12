@@ -48,7 +48,16 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     final res = await wifiSsidManager.requestPermission();
     globalState.container.read(locationPermissionsProvider.notifier).value =
         res;
-    if (!mounted && res != WifiSsidPermission.permanentlyDenied) {
+    if (!mounted) {
+      return;
+    }
+    if (res == WifiSsidPermission.granted) {
+      final ssid = await wifiSsidManager.getSsid();
+      globalState.container.read(currentSSIDProvider.notifier).value = ssid;
+      return;
+    }
+    if (res == WifiSsidPermission.permanentlyDenied) {
+      _handlePermanentlyDeniedLocationPermission();
       return;
     }
     final needGo = await globalState.showMessage(
