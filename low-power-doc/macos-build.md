@@ -67,7 +67,7 @@ make macos-arm64
 bash macos/packaging/release_arm64.sh
 
 # 自定义名称/版本
-APP_NAME=FlClash_Muyu APP_VERSION=0.8.95 APP_BUILD_NUMBER=2026072102 \
+APP_NAME=FlClash_Muyu APP_VERSION=0.8.95 APP_BUILD_NUMBER=2026081401 \
   bash macos/packaging/release_arm64.sh
 
 # Developer ID 签名（用于分发）

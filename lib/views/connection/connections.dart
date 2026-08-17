@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -155,27 +156,33 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
   }
 
   Future<void> _updateConnections() async {
-    final trackerInfos = await coreController.getConnections();
-    if (!mounted) {
-      return;
+    try {
+      final trackerInfos = await coreController.getConnections();
+      if (!mounted) {
+        return;
+      }
+      final updateTime = DateTime.now();
+      final previousUpdateTime = _lastUpdateTime;
+      final previousById = {
+        for (final item in _connectionsStateNotifier.value.trackerInfos)
+          item.id: item,
+      };
+      final elapsed = previousUpdateTime == null
+          ? Duration.zero
+          : updateTime.difference(previousUpdateTime);
+      final trackerInfosWithSpeed = trackerInfos.map((item) {
+        return item.withSpeedFrom(previousById[item.id], elapsed);
+      }).toList();
+      _lastUpdateTime = updateTime;
+      _updateConnectionOrder(trackerInfosWithSpeed);
+      _connectionsStateNotifier.value = _connectionsStateNotifier.value
+          .copyWith(trackerInfos: trackerInfosWithSpeed);
+    } catch (error) {
+      commonPrint.log(
+        'updateConnections error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
     }
-    final updateTime = DateTime.now();
-    final previousUpdateTime = _lastUpdateTime;
-    final previousById = {
-      for (final item in _connectionsStateNotifier.value.trackerInfos)
-        item.id: item,
-    };
-    final elapsed = previousUpdateTime == null
-        ? Duration.zero
-        : updateTime.difference(previousUpdateTime);
-    final trackerInfosWithSpeed = trackerInfos.map((item) {
-      return item.withSpeedFrom(previousById[item.id], elapsed);
-    }).toList();
-    _lastUpdateTime = updateTime;
-    _updateConnectionOrder(trackerInfosWithSpeed);
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      trackerInfos: trackerInfosWithSpeed,
-    );
   }
 
   Future<void> _handleBlockConnection(String id) async {

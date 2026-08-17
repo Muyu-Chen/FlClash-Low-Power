@@ -8,7 +8,7 @@ project_dir="$(cd -- "$script_dir/../.." && pwd)"
 # for one invocation with APP_NAME, APP_VERSION, and APP_BUILD_NUMBER.
 app_name="${APP_NAME:-FlClash}"
 build_name="${APP_VERSION:-0.8.95}"
-build_number="${APP_BUILD_NUMBER:-2026072102}"
+build_number="${APP_BUILD_NUMBER:-2026081401}"
 archive_dir="${ARCHIVE_DIR:-$project_dir/dist/macos-arm64}"
 
 app_path=""

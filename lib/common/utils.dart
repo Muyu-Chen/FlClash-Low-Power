@@ -91,13 +91,12 @@ class Utils {
     }
     final diff = timeStamp / 1000;
     final inHours = (diff / 3600).floor();
+    if (inHours > 999) {
+      return '999:59:59';
+    }
     final inMinutes = (diff / 60 % 60).floor();
     final inSeconds = (diff % 60).floor();
-
-    final hoursText = inHours < 100
-        ? getDateStringLast2(inHours)
-        : '$inHours';
-
+    final hoursText = inHours.toString().padLeft(2, '0');
     return '$hoursText:${getDateStringLast2(inMinutes)}:${getDateStringLast2(inSeconds)}';
   }
 
