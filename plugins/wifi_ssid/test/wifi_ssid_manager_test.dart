@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
@@ -17,9 +19,9 @@ void main() {
     MethodCall? receivedCall;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
-      receivedCall = call;
-      return 'Office Wi-Fi';
-    });
+          receivedCall = call;
+          return 'Office Wi-Fi';
+        });
 
     expect(await manager.getSsid(), 'Office Wi-Fi');
     expect(receivedCall?.method, 'getSsid');
@@ -35,8 +37,8 @@ void main() {
   test('getSsid returns null after a platform error', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async {
-      throw PlatformException(code: 'UNAVAILABLE');
-    });
+          throw PlatformException(code: 'UNAVAILABLE');
+        });
 
     expect(await manager.getSsid(), isNull);
   });
@@ -45,9 +47,9 @@ void main() {
     var nativeState = 0;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
-      expect(call.method, 'checkPermission');
-      return nativeState;
-    });
+          expect(call.method, 'checkPermission');
+          return nativeState;
+        });
 
     expect(await manager.checkPermission(), WifiSsidPermission.granted);
     nativeState = 1;
@@ -62,9 +64,9 @@ void main() {
   test('requestPermission treats a null native value as denied', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
-      expect(call.method, 'requestPermission');
-      return null;
-    });
+          expect(call.method, 'requestPermission');
+          return null;
+        });
 
     expect(await manager.requestPermission(), WifiSsidPermission.denied);
   });
@@ -72,19 +74,43 @@ void main() {
   test('checkPermission returns denied after a platform error', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async {
-      throw PlatformException(code: 'UNAVAILABLE');
-    });
+          throw PlatformException(code: 'UNAVAILABLE');
+        });
 
     expect(await manager.checkPermission(), WifiSsidPermission.denied);
   });
 
-  test('requestPermission returns denied after a platform error', () async {
+  test(
+    'requestPermission reports a platform error so callers can retry',
+    () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (_) async {
+            throw PlatformException(code: 'UNAVAILABLE');
+          });
+
+      await expectLater(
+        manager.requestPermission(),
+        throwsA(isA<PlatformException>()),
+      );
+    },
+  );
+
+  testWidgets('a permission prompt may stay open beyond three seconds', (
+    tester,
+  ) async {
+    final permission = Completer<int>();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (_) async {
-      throw PlatformException(code: 'UNAVAILABLE');
+        .setMockMethodCallHandler(channel, (_) => permission.future);
+    var completed = false;
+    final requested = manager.requestPermission().then((value) {
+      completed = true;
+      return value;
     });
 
-    expect(await manager.requestPermission(), WifiSsidPermission.denied);
+    await tester.pump(const Duration(seconds: 4));
+    expect(completed, isFalse);
+    permission.complete(0);
+    expect(await requested, WifiSsidPermission.granted);
   });
 
   test('invalid native permission state produces a platform error', () async {

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 /// The platform permission state required to read the current Wi-Fi SSID.
 enum WifiSsidPermission { granted, denied, permanentlyDenied }
 
-/// Provides access to the current Wi-Fi SSID and its required permission.
 class WifiSsidManager {
   WifiSsidManager._();
 
@@ -28,15 +27,13 @@ class WifiSsidManager {
     }
   }
 
-  /// Checks whether the required platform permission has been granted.
   Future<WifiSsidPermission> checkPermission() async {
     final result = await _invokePermissionMethod(_checkPermissionMethod);
     return _decodePermission(result);
   }
 
-  /// Requests the required platform permission from the user.
   Future<WifiSsidPermission> requestPermission() async {
-    final result = await _invokePermissionMethod(_requestPermissionMethod);
+    final result = await _channel.invokeMethod<int>(_requestPermissionMethod);
     return _decodePermission(result);
   }
 
@@ -58,10 +55,10 @@ class WifiSsidManager {
       2 => WifiSsidPermission.permanentlyDenied,
       null || 1 => WifiSsidPermission.denied,
       _ => throw PlatformException(
-          code: 'INVALID_PERMISSION_STATE',
-          message: 'Native wifi_ssid returned an invalid permission state.',
-          details: value,
-        ),
+        code: 'INVALID_PERMISSION_STATE',
+        message: 'Native wifi_ssid returned an invalid permission state.',
+        details: value,
+      ),
     };
   }
 }

@@ -4,11 +4,10 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 project_dir="$(cd -- "$script_dir/../.." && pwd)"
 
-# Release metadata. Change these values for the next release, or override them
-# for one invocation with APP_NAME, APP_VERSION, and APP_BUILD_NUMBER.
 app_name="${APP_NAME:-FlClash}"
-build_name="${APP_VERSION:-0.8.95}"
-build_number="${APP_BUILD_NUMBER:-2026081401}"
+package_version="$(sed -n 's/^version: //p' "$project_dir/pubspec.yaml")"
+build_name="${APP_VERSION:-${package_version%%+*}}"
+build_number="${APP_BUILD_NUMBER:-${package_version##*+}}"
 archive_dir="${ARCHIVE_DIR:-$project_dir/dist/macos-arm64}"
 
 app_path=""

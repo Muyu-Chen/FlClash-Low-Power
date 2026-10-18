@@ -5,46 +5,27 @@
 ## 环境
 
 - macOS 26 (Apple Silicon) + Xcode 26
-- FVM 固定 Flutter 3.44.4，见 `.fvmrc`
-- Go 1.21+（核心）、Rust（rustup 管理）、CocoaPods
+- Flutter 3.47.7（自带 Dart 3.13.5），见 `.fvmrc`；上游 CI 使用 Flutter 3.47.6
+- Go 1.27.2、Rust 1.99.1；macOS 插件改用 Swift Package Manager
 
-### FVM 安装
-
-```bash
-curl -fsSL https://fvm.app/install.sh | bash
-export PATH="$HOME/fvm/bin:$PATH"
-fvm use 3.44.4 --skip-pub-get
-```
-
-- Flutter 3.44.4 FVM 缓存 ~1.2 GB
-- 项目 `.fvm/` 仅含链接，已被 .gitignore 忽略
-
-### FVM 卸载
+### 安装与升级
 
 ```bash
-fvm remove 3.44.4        # 只移除这一版 Flutter SDK
-fvm destroy               # 移除全部 FVM 缓存的 SDK
-curl -fsSL https://fvm.app/install.sh | bash -s -- --uninstall  # 卸载 FVM
+brew install --cask flutter
+brew install go rustup
+brew upgrade --cask flutter
+brew upgrade go rustup
+rustup toolchain install 1.99.1 --profile minimal --component rustfmt
+rustup default 1.99.1
+brew link --force rustup
 ```
 
-### 其他工具
+本机使用 Homebrew 的 Flutter、Go 和 rustup。Rust SDK 由 rustup 管理并固定到项目的 1.99.1，不重复安装 Homebrew Rust。
+项目 `.fvm/` 仅保存 SDK 链接，不单独存放 Flutter。
 
 ```bash
-brew install go cocoapods rustup-init
-rustup default stable
+brew cleanup flutter go rustup
 ```
-
-本机实测额外占用：
-
-| 工具 | 路径 | 大小 |
-|------|------|------|
-| Flutter SDK 3.44.6 | `/opt/homebrew/share/flutter` | ~3.8 GB |
-| Go 1.26 | `/opt/homebrew/Cellar/go` | ~258 MB |
-| Rust (rustup) | `~/.rustup` + `~/.cargo` | ~1.6 GB |
-| CocoaPods | `/opt/homebrew/Cellar/cocoapods` | ~24 MB |
-| pub 缓存 | `~/.pub-cache` | ~1 GB |
-| Go 模块缓存 | `~/go` | ~400 MB |
-| **合计** | | **~7 GB** |
 
 详细卸载见 `low-power-doc/uninstall-build-tools.md`。
 
@@ -67,7 +48,7 @@ make macos-arm64
 bash macos/packaging/release_arm64.sh
 
 # 自定义名称/版本
-APP_NAME=FlClash_Muyu APP_VERSION=0.8.95 APP_BUILD_NUMBER=2026081401 \
+APP_NAME=FlClash_Muyu APP_VERSION=0.9.1 APP_BUILD_NUMBER=2026101702 \
   bash macos/packaging/release_arm64.sh
 
 # Developer ID 签名（用于分发）
@@ -86,9 +67,8 @@ make macos-release-arm64 SIGNING_IDENTITY="Developer ID Application: Example, In
 ### 调试构建
 
 ```bash
-flutter build macos --debug
-# 或
-flutter run -d macos
+flutter build macos --debug --dart-define=SAFE_MODE=true
+flutter run -d macos --dart-define=SAFE_MODE=true
 ```
 
 注意：debug 构建右上角会显示 "DEBUG" 丝带；release 构建如果未传 `--dart-define=APP_ENV=stable` 会显示 "PRE" 丝带。

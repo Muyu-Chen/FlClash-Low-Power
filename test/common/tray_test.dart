@@ -1,158 +1,90 @@
-import 'dart:io';
-
 import 'package:fl_clash/common/tray.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
 void main() {
-  group('Tray.getTryIcon', () {
-    final tray = Tray();
-    final suffix = tray.trayIconSuffix;
+  group('AppTray.getTrayIcon', () {
+    final windows = AppTray.forPlatform(isMacOS: false, isWindows: true);
+    final macOS = AppTray.forPlatform(isMacOS: true, isWindows: false);
+    final linux = AppTray.forPlatform(isMacOS: false, isWindows: false);
 
-    test('returns idle icon when core is not started', () {
+    test('windows loads ico files from the windows directory', () {
       expect(
-        tray.getTryIcon(isStart: false, tunEnable: false),
-        'assets/images/icon/status_1.$suffix',
+        windows.getTrayIcon(isStart: false, tunEnable: false, safeMode: false),
+        'assets/images/tray/windows/status_1.ico',
+      );
+      expect(
+        windows.getTrayIcon(isStart: true, tunEnable: false, safeMode: false),
+        'assets/images/tray/windows/status_2.ico',
+      );
+      expect(
+        windows.getTrayIcon(isStart: true, tunEnable: true, safeMode: false),
+        'assets/images/tray/windows/status_3.ico',
       );
     });
 
-    test('returns normal mode icon when core is started without TUN', () {
+    test('linux loads png files from the unix directory', () {
       expect(
-        tray.getTryIcon(isStart: true, tunEnable: false),
-        Platform.isMacOS
-            ? 'assets/images/icon/status_1.$suffix'
-            : 'assets/images/icon/status_2.$suffix',
+        linux.getTrayIcon(isStart: false, tunEnable: false, safeMode: false),
+        'assets/images/tray/unix/status_1.png',
+      );
+      expect(
+        linux.getTrayIcon(isStart: true, tunEnable: false, safeMode: false),
+        'assets/images/tray/unix/status_2.png',
+      );
+      expect(
+        linux.getTrayIcon(isStart: true, tunEnable: true, safeMode: false),
+        'assets/images/tray/unix/status_3.png',
       );
     });
 
-    test('returns enhanced mode icon when core is started with TUN', () {
-      expect(
-        tray.getTryIcon(isStart: true, tunEnable: true),
-        Platform.isMacOS
-            ? 'assets/images/icon/status_1.$suffix'
-            : 'assets/images/icon/status_3.$suffix',
-      );
-    });
-  });
-
-  group('Tray.updateTrayTitle deduplication', () {
-    TestWidgetsFlutterBinding.ensureInitialized();
-
-    late Tray tray;
-    late List<MethodCall> calls;
-
-    setUp(() {
-      tray = Tray();
-      calls = <MethodCall>[];
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(const MethodChannel('tray_manager'), (
-            call,
-          ) async {
-            calls.add(call);
-            return null;
-          });
-    });
-
-    tearDown(() async {
-      await tray.destroy();
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(const MethodChannel('tray_manager'), null);
-    });
-
-    test(
-      'skips repeated setTitle when the title is unchanged',
-      () async {
-        await tray.updateTrayTitle(
-          showTrayTitle: false,
-          traffic: const Traffic(),
-        );
-        await tray.updateTrayTitle(
-          showTrayTitle: false,
-          traffic: const Traffic(),
-        );
-        await tray.updateTrayTitle(
-          showTrayTitle: false,
-          traffic: const Traffic(),
-        );
-
-        final setTitleCalls = calls
-            .where((call) => call.method == 'setTitle')
-            .toList();
-        expect(setTitleCalls, hasLength(1));
-        expect(setTitleCalls.single.arguments, {'title': ''});
-      },
-      skip: !Platform.isMacOS
-          ? 'updateTrayTitle is macOS-only'
-          : false,
-    );
-
-    test(
-      'calls setTitle again after destroy resets the title cache',
-      () async {
-        await tray.updateTrayTitle(
-          showTrayTitle: false,
-          traffic: const Traffic(),
-        );
+    test('macOS keeps the template icon in every state', () {
+      for (final (isStart, tunEnable) in [
+        (false, false),
+        (true, false),
+        (true, true),
+      ]) {
         expect(
-          calls.where((call) => call.method == 'setTitle'),
-          hasLength(1),
-        );
-
-        await tray.destroy();
-        calls.clear();
-
-        await tray.updateTrayTitle(
-          showTrayTitle: false,
-          traffic: const Traffic(),
-        );
-        expect(
-          calls.where((call) => call.method == 'setTitle'),
-          hasLength(1),
-        );
-      },
-      skip: !Platform.isMacOS
-          ? 'updateTrayTitle is macOS-only'
-          : false,
-    );
-
-    test(
-      'does not cache the title when setTitle fails',
-      () async {
-        var shouldFail = true;
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(const MethodChannel('tray_manager'), (
-              call,
-            ) async {
-              calls.add(call);
-              if (call.method == 'setTitle' && shouldFail) {
-                throw PlatformException(code: 'setTitle_failed');
-              }
-              return null;
-            });
-
-        await expectLater(
-          tray.updateTrayTitle(
-            showTrayTitle: false,
-            traffic: const Traffic(),
+          macOS.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: false,
           ),
-          throwsA(isA<PlatformException>()),
+          'assets/images/tray/macos/status_1.png',
         );
+      }
+    });
 
-        shouldFail = false;
-        await tray.updateTrayTitle(
-          showTrayTitle: false,
-          traffic: const Traffic(),
-        );
-
+    test('safe mode shows its own icon whatever the core is doing', () {
+      for (final (isStart, tunEnable) in [
+        (false, false),
+        (true, false),
+        (true, true),
+      ]) {
         expect(
-          calls.where((call) => call.method == 'setTitle'),
-          hasLength(2),
+          windows.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: true,
+          ),
+          'assets/images/tray/windows/status_4.ico',
         );
-      },
-      skip: !Platform.isMacOS
-          ? 'updateTrayTitle is macOS-only'
-          : false,
-    );
+        expect(
+          linux.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: true,
+          ),
+          'assets/images/tray/unix/status_4.png',
+        );
+        expect(
+          macOS.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: true,
+          ),
+          'assets/images/tray/macos/status_4.png',
+        );
+      }
+    });
   });
 }

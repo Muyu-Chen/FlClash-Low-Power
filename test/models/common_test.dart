@@ -1,10 +1,8 @@
 import 'dart:io';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -63,58 +61,6 @@ void main() {
       verifyNever(() => file.length());
       verifyNever(() => file.lastModified());
     });
-
-    testWidgets('shows unknown while preserving file size', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              return Text(const FileInfo(size: 1024).getDesc(context));
-            },
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('1KB  ·  Unknown'), findsOneWidget);
-    });
-
-    testWidgets('shows relative time for valid last modified time', (
-      tester,
-    ) async {
-      final lastModified = DateTime.now().subtract(const Duration(days: 2));
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              return Text(
-                FileInfo(
-                  size: 1024,
-                  lastModified: lastModified,
-                ).getDesc(context),
-              );
-            },
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('1KB  ·  2 days ago'), findsOneWidget);
-    });
   });
 
   group('PackagesExt', () {
@@ -170,7 +116,7 @@ void main() {
   });
 
   group('TrackerInfoExt', () {
-    test('builds destination description and process text', () {
+    test('builds destination title and process text', () {
       final trackerInfo = TrackerInfo(
         id: '1',
         start: DateTime(2026),
@@ -187,116 +133,15 @@ void main() {
         rulePayload: '',
       );
 
-      expect(trackerInfo.desc, 'tcp://example.com/1.1.1.1:443');
+      expect(trackerInfo.title, 'example.com');
       expect(trackerInfo.progressText, 'Browser(501)');
-    });
-
-    test('calculates speeds from consecutive snapshots', () {
-      final start = DateTime(2026);
-      final previous = TrackerInfo(
-        id: '1',
-        upload: 100,
-        download: 200,
-        start: start,
-        metadata: const Metadata(process: 'Browser'),
-        chains: const [],
-        rule: 'MATCH',
-        rulePayload: '',
-      );
-      final current = previous.copyWith(upload: 400, download: 800);
-
-      final result = current.withSpeedFrom(
-        previous,
-        const Duration(milliseconds: 1500),
-      );
-
-      expect(result.uploadSpeed, 200);
-      expect(result.downloadSpeed, 400);
-      expect(current.withSpeedFrom(null, Duration.zero).uploadSpeed, 0);
-    });
-
-    test('sorts connections by speed and keeps missing processes last', () {
-      final start = DateTime(2026);
-      TrackerInfo connection(
-        String id,
-        String process,
-        int uploadSpeed,
-        int downloadSpeed,
-      ) {
-        return TrackerInfo(
-          id: id,
-          start: start.add(Duration(seconds: int.parse(id))),
-          metadata: Metadata(process: process),
-          chains: const [],
-          rule: 'MATCH',
-          rulePayload: '',
-          uploadSpeed: uploadSpeed,
-          downloadSpeed: downloadSpeed,
-        );
-      }
-
-      final connections = [
-        connection('1', 'Zulu', 10, 30),
-        connection('2', 'alpha', 30, 20),
-        connection('3', 'Bravo', 20, 10),
-        connection('4', '', 40, 40),
-      ];
-
-      expect(
-        connections
-            .sortedBy(ConnectionSortType.downloadDesc)
-            .map((item) => item.id),
-        ['4', '1', '2', '3'],
-      );
-      expect(
-        connections
-            .sortedBy(ConnectionSortType.uploadAsc)
-            .map((item) => item.id),
-        ['1', '3', '2', '4'],
-      );
-      expect(
-        connections
-            .sortedBy(ConnectionSortType.processAsc)
-            .map((item) => item.id),
-        ['2', '3', '1', '4'],
-      );
-      expect(
-        connections
-            .sortedBy(ConnectionSortType.processDesc)
-            .map((item) => item.id),
-        ['1', '3', '2', '4'],
-      );
-      expect(connections.sortedBy(ConnectionSortType.none), same(connections));
-    });
-
-    test('reapplies a throttled connection id order to fresh snapshots', () {
-      TrackerInfo connection(String id) {
-        return TrackerInfo(
-          id: id,
-          start: DateTime(2026),
-          metadata: const Metadata(),
-          chains: const [],
-          rule: 'MATCH',
-          rulePayload: '',
-        );
-      }
-
-      final connections = [connection('1'), connection('2'), connection('3')];
-
-      expect(connections.orderedByIds(['3', '1', '2']).map((item) => item.id), [
-        '3',
-        '1',
-        '2',
-      ]);
     });
   });
 
   group('TrafficExt', () {
-    test('formats speed, description, tray title, and total speed', () {
+    test('formats tray title and total speed', () {
       const traffic = Traffic(up: 1024, down: 2048);
 
-      expect(traffic.speedText, '↑ 1KB/s   ↓ 2KB/s');
-      expect(traffic.desc, '1KB ↑ 2KB ↓');
       expect(traffic.trayTitle, '1 KB/s\n2 KB/s');
       expect(traffic.speed, 3072);
     });
@@ -321,6 +166,39 @@ void main() {
     });
   });
 
+  group('ScriptsExt naming', () {
+    Script script(int id, String label) =>
+        Script(id: id, label: label, lastUpdateTime: DateTime(2026));
+
+    test('hasLabel ignores the script being renamed', () {
+      final scripts = [script(1, 'a'), script(2, 'b')];
+      expect(scripts.hasLabel('a'), isTrue);
+      expect(scripts.hasLabel('a', except: scripts[0]), isFalse);
+      expect(scripts.hasLabel('a', except: scripts[1]), isTrue);
+      expect(scripts.hasLabel('c'), isFalse);
+    });
+
+    test('uniqueLabel trims, falls back and numbers duplicates', () {
+      final scripts = [script(1, 'remote'), script(2, 'remote(1)')];
+      expect(scripts.uniqueLabel(' local ', fallback: 'Script'), 'local');
+      expect(scripts.uniqueLabel('remote', fallback: 'Script'), 'remote(2)');
+      expect(scripts.uniqueLabel('   ', fallback: 'Script'), 'Script');
+      expect(
+        [script(3, 'Script')].uniqueLabel('', fallback: 'Script'),
+        'Script(1)',
+      );
+    });
+
+    test('uniqueLabel keeps the numbered label within the name limit', () {
+      final long = 'x' * 100;
+      final scripts = [script(1, 'x' * TextInputLimits.name)];
+      final label = scripts.uniqueLabel(long, fallback: 'Script');
+      expect(label.length, lessThanOrEqualTo(TextInputLimits.name));
+      expect(label, endsWith('(1)'));
+      expect(scripts.hasLabel(label), isFalse);
+    });
+  });
+
   group('IpInfo parsers', () {
     test('parse supported response shapes', () {
       expect(
@@ -328,12 +206,42 @@ void main() {
         const IpInfo(ip: '1.1.1.1', countryCode: 'US'),
       );
       expect(
-        IpInfo.fromMyIpJson({'ip': '2.2.2.2', 'cc': 'JP'}),
+        IpInfo.fromIdentMeJson({'ip': '2.2.2.2', 'cc': 'JP'}),
         const IpInfo(ip: '2.2.2.2', countryCode: 'JP'),
       );
       expect(
         IpInfo.fromIpAPIJson({'query': '3.3.3.3', 'countryCode': 'CN'}),
         const IpInfo(ip: '3.3.3.3', countryCode: 'CN'),
+      );
+      expect(
+        IpInfo.fromGeoJsJson({'ip': '4.4.4.4', 'country_code': 'DE'}),
+        const IpInfo(ip: '4.4.4.4', countryCode: 'DE'),
+      );
+      expect(
+        IpInfo.fromCountryIsJson({'ip': '5.5.5.5', 'country': 'FR'}),
+        const IpInfo(ip: '5.5.5.5', countryCode: 'FR'),
+      );
+    });
+
+    test('parse the ipquery.io country from its location object', () {
+      expect(
+        IpInfo.fromIpQueryJson({
+          'ip': '203.0.113.9',
+          'isp': {'asn': 'AS64500', 'org': '', 'isp': 'Example'},
+          'location': {'country': 'United Kingdom', 'country_code': 'GB'},
+          'risk': {'is_datacenter': false},
+        }),
+        const IpInfo(ip: '203.0.113.9', countryCode: 'GB'),
+      );
+    });
+
+    test('parse the Cloudflare trace key-value text', () {
+      expect(
+        IpInfo.fromCloudflareTrace(
+          'fl=0f0\nh=www.cloudflare.com\nip=203.0.113.9\nts=1757800000.1\n'
+          'visit_scheme=https\ncolo=LHR\nhttp=http/2\nloc=GB\ntls=TLSv1.3\n',
+        ),
+        const IpInfo(ip: '203.0.113.9', countryCode: 'GB'),
       );
     });
 
@@ -343,7 +251,18 @@ void main() {
         throwsFormatException,
       );
       expect(
-        () => IpInfo.fromIpApiCoJson({'ip': '1.1.1.1'}),
+        () => IpInfo.fromGeoJsJson({'ip': '1.1.1.1'}),
+        throwsFormatException,
+      );
+      expect(
+        () => IpInfo.fromIpQueryJson({
+          'ip': '1.1.1.1',
+          'location': <String, dynamic>{},
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => IpInfo.fromCloudflareTrace('ip=1.1.1.1\ncolo=LHR\n'),
         throwsFormatException,
       );
     });
@@ -358,6 +277,58 @@ void main() {
       expect(success.isError, isFalse);
       expect(error.isSuccess, isFalse);
       expect(error.isError, isTrue);
+    });
+  });
+
+  group('parseIconSet', () {
+    test('reads the name and icons of a gallery subscription', () {
+      final parsed = parseIconSet(
+        '{"name": " Qure ", "description": "x", "icons": ['
+        '{"name": "Hong_Kong.png", "url": "https://example.com/hk.png"},'
+        '{"url": "https://example.com/Japan.svg?raw=true"}'
+        ']}',
+      );
+
+      expect(parsed.name, 'Qure');
+      expect(parsed.icons, const [
+        IconSetIcon(name: 'Hong_Kong.png', url: 'https://example.com/hk.png'),
+        IconSetIcon(
+          name: 'Japan.svg',
+          url: 'https://example.com/Japan.svg?raw=true',
+        ),
+      ]);
+      expect(parsed.icons.first.label, 'Hong Kong');
+    });
+
+    test('drops entries without an http url and repeated urls', () {
+      final parsed = parseIconSet(
+        '{"icons": ['
+        '{"name": "a", "url": "https://example.com/a.png"},'
+        '{"name": "again", "url": "https://example.com/a.png"},'
+        '{"name": "ftp", "url": "ftp://example.com/b.png"},'
+        '{"name": "relative", "url": "c.png"},'
+        '{"name": "missing"},'
+        '"https://example.com/d.png"'
+        ']}',
+      );
+
+      expect(parsed.name, isEmpty);
+      expect(parsed.icons.map((icon) => icon.name), ['a']);
+    });
+
+    test('rejects documents that are not icon sets', () {
+      for (final content in [
+        'not json',
+        '[]',
+        '{"name": "x"}',
+        '{"icons": [{"name": "x", "url": "file:///x.png"}]}',
+      ]) {
+        expect(
+          () => parseIconSet(content),
+          throwsFormatException,
+          reason: content,
+        );
+      }
     });
   });
 }

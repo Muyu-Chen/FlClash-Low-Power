@@ -4,70 +4,107 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/on_demand.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
-class ConnectivityManager extends StatefulWidget {
+typedef SsidReader = Future<String?> Function();
+
+class ConnectivityManager extends ConsumerStatefulWidget {
   final Function(List<ConnectivityResult> results)? onConnectivityChanged;
+  final Stream<List<ConnectivityResult>>? connectivityStream;
+  final SsidReader? readSsid;
   final Widget child;
 
   const ConnectivityManager({
     super.key,
     this.onConnectivityChanged,
+    this.connectivityStream,
+    this.readSsid,
     required this.child,
   });
 
   @override
-  State<ConnectivityManager> createState() => _ConnectivityManagerState();
+  ConsumerState<ConnectivityManager> createState() =>
+      _ConnectivityManagerState();
 }
 
-class _ConnectivityManagerState extends State<ConnectivityManager> {
-  late StreamSubscription subscription;
-  int _ssidRefreshVersion = 0;
+class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
+  late final StreamSubscription subscription;
+  late final SsidReader _readSsid =
+      widget.readSsid ?? WifiSsidManager.instance.getSsid;
+
+  int _ssidRequestId = 0;
+  bool _onWifi = false;
 
   @override
   void initState() {
     super.initState();
-    subscription = Connectivity().onConnectivityChanged.listen((results) {
-      if (results.contains(ConnectivityResult.wifi)) {
-        _updateCurrentSsid();
-      } else {
-        globalState.container.read(currentSSIDProvider.notifier).value = null;
-      }
-      if (widget.onConnectivityChanged != null) {
-        widget.onConnectivityChanged!(results);
+    final stream =
+        widget.connectivityStream ?? Connectivity().onConnectivityChanged;
+    subscription = stream.listen(_handleResults);
+    ref.listenManual(excludeSSIDsProvider.select((state) => state.isNotEmpty), (
+      previous,
+      next,
+    ) {
+      if (previous != next) {
+        unawaited(_updateSsid());
       }
     });
+    ref.listenManual(
+      locationPermissionsProvider.select(
+        (permission) => permission == WifiSsidPermission.granted,
+      ),
+      (previous, next) {
+        if (previous != next) {
+          unawaited(_updateSsid());
+        }
+      },
+    );
   }
 
-  Future<void> _updateCurrentSsid() async {
-    final version = ++_ssidRefreshVersion;
-    final permission = await WifiSsidManager.instance.checkPermission();
-    if (!mounted || version != _ssidRefreshVersion) {
+  void _handleResults(List<ConnectivityResult> results) {
+    _onWifi = results.contains(ConnectivityResult.wifi);
+    unawaited(_updateSsid());
+    widget.onConnectivityChanged?.call(results);
+  }
+
+  Future<void> _updateSsid() async {
+    final requestId = ++_ssidRequestId;
+    // The SSID costs a blocking platform call and a location permission on
+    // Android and macOS, and nothing reads it until a network is excluded.
+    if (!_onWifi ||
+        ref.read(safeModeProvider) ||
+        ref.read(excludeSSIDsProvider).isEmpty) {
+      _publishSsid(requestId, null);
       return;
     }
-    globalState.container.read(locationPermissionsProvider.notifier).value =
-        permission;
-    if (permission != WifiSsidPermission.granted) {
-      globalState.container.read(currentSSIDProvider.notifier).value = null;
+    try {
+      final ssid = await _readSsid();
+      if (_publishSsid(requestId, ssid)) {
+        commonPrint.log('Wi-fi SSID: $ssid', logLevel: LogLevel.info);
+      }
+    } catch (error) {
       commonPrint.log(
-        'Wi-fi SSID skipped: location permission is $permission',
-        logLevel: LogLevel.info,
+        'Unable to read the Wi-Fi SSID: $error',
+        logLevel: LogLevel.warning,
       );
-      return;
+      _publishSsid(requestId, null);
     }
-    final ssid = await WifiSsidManager.instance.getSsid();
-    if (!mounted || version != _ssidRefreshVersion) {
-      return;
+  }
+
+  bool _publishSsid(int requestId, String? ssid) {
+    if (requestId != _ssidRequestId || !mounted) {
+      return false;
     }
-    globalState.container.read(currentSSIDProvider.notifier).value = ssid;
-    commonPrint.log('Wi-fi SSID: $ssid ', logLevel: LogLevel.info);
+    ref.read(currentSSIDProvider.notifier).value = ssid;
+    return true;
   }
 
   @override
   void dispose() {
-    _ssidRefreshVersion++;
     subscription.cancel();
     super.dispose();
   }
