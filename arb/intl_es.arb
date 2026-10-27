@@ -939,5 +939,17 @@
   "customImportDroppedSubRules": "{count, plural, =1{Se descartó 1 regla SUB-RULE, porque los perfiles personalizados no admiten subreglas} other{Se descartaron {label} reglas SUB-RULE, porque los perfiles personalizados no admiten subreglas}}",
   "autoInclude": "Incluir automáticamente",
   "allReferencedProxies": "Todos los proxies referenciados",
-  "allReferencedProxyProviders": "Todos los proveedores de proxies referenciados"
+  "allReferencedProxyProviders": "Todos los proveedores de proxies referenciados",
+  "hotspotOwnershipChanged": "La configuración del punto de acceso cambió externamente; el control automático se ha detenido",
+  "hotspotSharing": "Punto de acceso con enrutamiento",
+  "hotspotConnected": "{ssid} · {count} dispositivos conectados",
+  "hotspotStopFailed": "No se pudo detener el punto de acceso; desactívalo en la configuración de Windows",
+  "hotspotSharingDescription": "Los dispositivos conectados al punto de acceso del PC usan las reglas actuales sin configurar un proxy HTTP. Detén otros puntos de acceso antes de activar esta función. Al desactivarla se detiene el punto de acceso que inició.",
+  "hotspotOff": "Desactivado",
+  "hotspotBypass": "El punto de acceso omite TUN; se ha intentado detener esta conexión compartida",
+  "hotspotExisting": "Hay otro punto de acceso activo; detenlo antes de activar esta función",
+  "hotspotFailed": "La operación falló; comprueba el punto de acceso de Windows y el Wi-Fi",
+  "hotspotRequiresTun": "Inicia el proxy, activa TUN y selecciona el modo Regla",
+  "hotspotWorking": "Actualizando la conexión compartida…",
+  "hotspotSafeMode": "Solo vista previa en modo seguro; el punto de acceso no cambia"
 }

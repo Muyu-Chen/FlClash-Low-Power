@@ -939,5 +939,17 @@
   "customImportDroppedSubRules": "{count, plural, =1{1 règle SUB-RULE a été abandonnée, car les profils personnalisés ne prennent pas en charge les sous-règles} other{{label} règles SUB-RULE ont été abandonnées, car les profils personnalisés ne prennent pas en charge les sous-règles}}",
   "autoInclude": "Inclure automatiquement",
   "allReferencedProxies": "Tous les proxys référencés",
-  "allReferencedProxyProviders": "Tous les fournisseurs de proxys référencés"
+  "allReferencedProxyProviders": "Tous les fournisseurs de proxys référencés",
+  "hotspotOwnershipChanged": "Les paramètres du point d’accès ont changé ailleurs ; le contrôle automatique est arrêté",
+  "hotspotSharing": "Partage de connexion avec routage",
+  "hotspotConnected": "{ssid} · {count} appareils connectés",
+  "hotspotStopFailed": "Impossible d’arrêter le point d’accès ; désactivez-le dans les paramètres Windows",
+  "hotspotSharingDescription": "Les appareils connectés au point d’accès du PC utilisent les règles de routage actuelles sans proxy HTTP. Arrêtez tout autre partage avant l’activation. La désactivation arrête le point d’accès lancé par cette fonction.",
+  "hotspotOff": "Désactivé",
+  "hotspotBypass": "Le point d’accès contourne TUN ; une tentative d’arrêt du partage a été effectuée",
+  "hotspotExisting": "Un autre point d’accès est actif ; arrêtez-le avant l’activation",
+  "hotspotFailed": "Échec de l’opération ; vérifiez le point d’accès Windows et le Wi-Fi",
+  "hotspotRequiresTun": "Démarrez le proxy, activez TUN et sélectionnez le mode Règle",
+  "hotspotWorking": "Mise à jour du partage de connexion…",
+  "hotspotSafeMode": "Aperçu uniquement en mode sans échec ; le point d’accès reste inchangé"
 }

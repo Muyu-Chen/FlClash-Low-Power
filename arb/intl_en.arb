@@ -939,5 +939,17 @@
   "customImportDroppedSubRules": "{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}",
   "autoInclude": "Auto-include",
   "allReferencedProxies": "All referenced proxies",
-  "allReferencedProxyProviders": "All referenced proxy providers"
+  "allReferencedProxyProviders": "All referenced proxy providers",
+  "hotspotOwnershipChanged": "Hotspot settings changed elsewhere; automatic control has stopped",
+  "hotspotSharing": "Hotspot sharing with routing",
+  "hotspotConnected": "{ssid} · {count} connected devices",
+  "hotspotStopFailed": "Could not stop the hotspot; turn it off in Windows Settings",
+  "hotspotSharingDescription": "Devices connected to the PC hotspot use the current routing rules without an HTTP proxy. Stop other hotspot sharing before enabling. Disabling stops the hotspot started by this feature.",
+  "hotspotOff": "Off",
+  "hotspotBypass": "Hotspot bypassed TUN; stopping this sharing was attempted",
+  "hotspotExisting": "Another hotspot is running; stop it before enabling",
+  "hotspotFailed": "Hotspot operation failed; check Windows hotspot and Wi-Fi",
+  "hotspotRequiresTun": "Start the proxy, enable TUN and use Rule mode first",
+  "hotspotWorking": "Updating hotspot sharing…",
+  "hotspotSafeMode": "Preview only in safe mode; hotspot is unchanged"
 }

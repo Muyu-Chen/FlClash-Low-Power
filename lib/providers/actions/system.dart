@@ -33,7 +33,11 @@ class SystemAction extends _$SystemAction {
   }
 
   @protected
-  Duration get exitWatchdogDuration => const Duration(seconds: 3);
+  Duration get exitWatchdogDuration =>
+      (ref.read(hotspotControllerProvider).managed ||
+          ref.read(hotspotControllerProvider).busy)
+      ? const Duration(seconds: 120)
+      : const Duration(seconds: 3);
 
   @protected
   Future<void> cleanupExitResources(bool needSave) async {
@@ -48,6 +52,7 @@ class SystemAction extends _$SystemAction {
       });
     }
     await Future.wait([
+      ref.read(hotspotControllerProvider.notifier).shutdown(),
       ?saveOperation,
       bootGuard.markClosed(),
       if (systemDnsCoordinator != null) systemDnsCoordinator!.shutdown(),
