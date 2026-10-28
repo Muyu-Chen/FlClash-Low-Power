@@ -3,6 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/active_refresh.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,7 @@ class RequestsView extends ConsumerStatefulWidget {
 }
 
 class _RequestsViewState extends ConsumerState<RequestsView>
-    with RouteMotionHoldMixin<RequestsView> {
+    with RouteMotionHoldMixin<RequestsView>, ActiveRefreshMixin<RequestsView> {
   final _listController = TrackerInfoListController();
   late final ScrollController _scrollController;
   late final _physics = FollowEndScrollPhysics(
@@ -49,14 +50,10 @@ class _RequestsViewState extends ConsumerState<RequestsView>
   }
 
   void updateRequestsThrottler() {
-    throttler.call(FunctionTag.requests, () {
-      if (!mounted) {
-        return;
-      }
-      updateWhenRouteSettled(
-        () => _listController.setTrackerInfos(ref.read(requestsProvider).list),
-      );
-    }, duration: renderThrottleDuration);
+    scheduleActiveRefresh(
+      () => _listController.setTrackerInfos(ref.read(requestsProvider).list),
+      delay: renderThrottleDuration,
+    );
   }
 
   @override

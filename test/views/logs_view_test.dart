@@ -49,6 +49,33 @@ void main() {
 
   const hintKey = ValueKey('scrollbarHintPill');
 
+  testWidgets('keeps recording while hidden and refreshes on return', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await pumpLogsView(tester);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    container
+        .read(logsProvider.notifier)
+        .add(const Log(payload: 'hidden log', dateTime: '2026-10-28 12:00:00'));
+    await tester.pump(const Duration(seconds: 1));
+    expect(container.read(logsProvider).list.last.payload, 'hidden log');
+    final display = tester
+        .widget<ValueListenableBuilder<LogsState>>(
+          find.byType(ValueListenableBuilder<LogsState>),
+        )
+        .valueListenable;
+    expect(display.value.logs.length, logCount);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(display.value.logs.last.payload, 'hidden log');
+    expect(find.textContaining('hidden log'), findsWidgets);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   Finder hintFinder() => find.byKey(hintKey);
 
   testWidgets('holding the scrollbar thumb floats the time hint beside it', (

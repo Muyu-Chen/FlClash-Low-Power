@@ -5,6 +5,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/active_refresh.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -50,7 +51,7 @@ class LogsView extends ConsumerStatefulWidget {
 }
 
 class _LogsViewState extends ConsumerState<LogsView>
-    with RouteMotionHoldMixin<LogsView> {
+    with RouteMotionHoldMixin<LogsView>, ActiveRefreshMixin<LogsView> {
   final _listController = LogListController();
   late final ScrollController _scrollController;
   late final _physics = FollowEndScrollPhysics(
@@ -102,14 +103,10 @@ class _LogsViewState extends ConsumerState<LogsView>
   }
 
   void updateLogsThrottler() {
-    throttler.call(FunctionTag.logs, () {
-      if (!mounted) {
-        return;
-      }
-      updateWhenRouteSettled(
-        () => _listController.setLogs(ref.read(logsProvider).list),
-      );
-    }, duration: renderThrottleDuration);
+    scheduleActiveRefresh(
+      () => _listController.setLogs(ref.read(logsProvider).list),
+      delay: renderThrottleDuration,
+    );
   }
 
   @override

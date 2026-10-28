@@ -98,6 +98,49 @@ void main() {
   double topOf(WidgetTester tester, String host) =>
       tester.getTopLeft(find.textContaining(host)).dy;
 
+  testWidgets('hidden events update storage but defer the table and counters', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await pumpRequestsTable(tester);
+    container.read(requestCountProvider.notifier).value = 3;
+    await tester.pump(renderThrottleDuration);
+    final counter = find
+        .descendant(
+          of: find.byType(ConnectionsTableCard),
+          matching: find.byType(ThrottledCount),
+        )
+        .first;
+    expect(
+      find.descendant(of: counter, matching: find.text('3')),
+      findsOneWidget,
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    container
+        .read(requestsProvider.notifier)
+        .addRequest(_request('hidden.test', 40));
+    container.read(requestCountProvider.notifier).value = 4;
+    await tester.pump(const Duration(seconds: 1));
+    expect(container.read(requestsProvider).list.length, 4);
+    expect(find.textContaining('hidden.test'), findsNothing);
+    expect(
+      find.descendant(of: counter, matching: find.text('3')),
+      findsOneWidget,
+    );
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.textContaining('hidden.test'), findsOneWidget);
+    expect(
+      find.descendant(of: counter, matching: find.text('4')),
+      findsOneWidget,
+    );
+    await teardown(tester);
+  });
+
   testWidgets('tapping a column head sorts the card table', (tester) async {
     await pumpRequestsTable(tester);
 

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_clash/common/fixed.dart';
 import 'package:test/test.dart';
 
@@ -91,6 +93,84 @@ void main() {
         list = list.append(i);
       }
       expect(list.list, [3, 4]);
+    });
+
+    test('wraps repeatedly without changing logical indices or snapshots', () {
+      var list = FixedList<int>(3);
+      for (var i = 0; i < 20; i++) {
+        list = list.append(i);
+      }
+      final before = list.list;
+      expect([list[0], list[1], list[2]], [17, 18, 19]);
+      list = list.replace({0: 170, 2: 190});
+      expect(list.list, [170, 18, 190]);
+      final copy = list.copyWith();
+      list = list.append(20);
+      expect(list.list, [18, 190, 20]);
+      expect(copy.list, [170, 18, 190]);
+      expect(before, [17, 18, 19]);
+      list.clear();
+      list.add(21);
+      expect(list.list, [21]);
+      expect(() => list[-1], throwsRangeError);
+      expect(() => list[1], throwsRangeError);
+      expect(() => list.replace({-1: 0}), throwsRangeError);
+      expect(() => list.replace({1: 0}), throwsRangeError);
+      list.clear();
+      expect(() => list[0], throwsRangeError);
+    });
+
+    test('supports nullable values and a capacity of one', () {
+      final list = FixedList<int?>(1, list: [1]);
+      list.add(null);
+      expect(list[0], isNull);
+      expect(list.list, [null]);
+      list.add(2);
+      expect(list.list, [2]);
+    });
+
+    test('generations share the ring position as well as its contents', () {
+      final first = FixedList<int>(3, list: [1, 2, 3]);
+      final second = first.append(4);
+      final held = second.list;
+      final firstSnapshot = first.list;
+      final third = second.append(5);
+      expect(first[0], 3);
+      expect(third.list, [3, 4, 5]);
+      expect(held, [2, 3, 4]);
+      expect(firstSnapshot, [2, 3, 4]);
+      expect(first.copyWith().list, [3, 4, 5]);
+      expect(third.revision, 2);
+    });
+
+    test('matches bounded list semantics across mixed operations', () {
+      final random = Random(42);
+      for (final capacity in [1, 2, 31, 3000]) {
+        var actual = FixedList<int>(capacity);
+        final expected = <int>[];
+        for (var i = 0; i < capacity * 3 + 200; i++) {
+          final before = actual.list;
+          final beforeValues = List.of(expected);
+          final revision = actual.revision;
+          if (random.nextInt(30) == 0) {
+            actual.clear();
+            expected.clear();
+          } else if (expected.isNotEmpty && random.nextInt(5) == 0) {
+            final index = random.nextInt(expected.length);
+            actual = actual.replace({index: -i});
+            expected[index] = -i;
+            expect(actual.revision, revision + 1);
+          } else {
+            actual = actual.append(i);
+            expected.add(i);
+            if (expected.length > capacity) expected.removeAt(0);
+            expect(actual.revision, revision + 1);
+          }
+          expect(actual.list, expected);
+          expect(before, beforeValues);
+          expect(actual.length, expected.length);
+        }
+      }
     });
   });
 

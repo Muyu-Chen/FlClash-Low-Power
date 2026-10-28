@@ -3,6 +3,7 @@ import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/active_refresh.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
@@ -55,7 +56,9 @@ class DnsQueriesView extends ConsumerStatefulWidget {
 }
 
 class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
-    with RouteMotionHoldMixin<DnsQueriesView> {
+    with
+        RouteMotionHoldMixin<DnsQueriesView>,
+        ActiveRefreshMixin<DnsQueriesView> {
   final _listController = DnsQueryListController();
   late final ScrollController _scrollController;
   late final _physics = FollowEndScrollPhysics(
@@ -87,14 +90,10 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
   }
 
   void _updateDnsQueriesThrottler() {
-    throttler.call(FunctionTag.dnsQueries, () {
-      if (!mounted) {
-        return;
-      }
-      updateWhenRouteSettled(
-        () => _listController.setDnsQueries(ref.read(dnsQueriesProvider).list),
-      );
-    }, duration: renderThrottleDuration);
+    scheduleActiveRefresh(
+      () => _listController.setDnsQueries(ref.read(dnsQueriesProvider).list),
+      delay: renderThrottleDuration,
+    );
   }
 
   Future<void> _clearDnsCache() async {

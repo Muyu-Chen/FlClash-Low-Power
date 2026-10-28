@@ -106,6 +106,31 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('keeps recording while hidden and refreshes on return', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await pumpRequests(tester);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    addRequest(_tracker(id: 'hidden', host: 'hidden.test'));
+    await tester.pump(const Duration(seconds: 1));
+    expect(container.read(requestsProvider).list.single.id, 'hidden');
+    final display = tester
+        .widget<ValueListenableBuilder<TrackerInfosState>>(
+          find.byType(ValueListenableBuilder<TrackerInfosState>),
+        )
+        .valueListenable;
+    expect(display.value.list, isEmpty);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(display.value.list.single.id, 'hidden');
+    expect(find.textContaining('hidden.test'), findsWidgets);
+    await teardownView(tester);
+  });
+
   testWidgets('renders the requests already in the store on mount', (
     tester,
   ) async {

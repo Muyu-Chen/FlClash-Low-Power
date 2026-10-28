@@ -116,6 +116,36 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('keeps recording while hidden and refreshes on return', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await pumpDnsQueries(tester);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    container
+        .read(dnsQueriesProvider.notifier)
+        .addQuery(_dnsQuery('hidden.test'));
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      container.read(dnsQueriesProvider).list.single.domain,
+      'hidden.test',
+    );
+    final display = tester
+        .widget<ValueListenableBuilder<DnsQueriesState>>(
+          find.byType(ValueListenableBuilder<DnsQueriesState>),
+        )
+        .valueListenable;
+    expect(display.value.list, isEmpty);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(display.value.list.single.domain, 'hidden.test');
+    expect(find.textContaining('hidden.test'), findsWidgets);
+    await teardownView(tester);
+  });
+
   testWidgets('lists each query with its answers and chips', (tester) async {
     seedDnsQueries([
       _dnsQuery(

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/method.dart';
@@ -8,6 +6,7 @@ import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/ui/active_refresh.dart';
 import 'package:fl_clash/views/connection/connections.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
@@ -164,49 +163,24 @@ class ThrottledCount extends ConsumerStatefulWidget {
   ConsumerState<ThrottledCount> createState() => _ThrottledCountState();
 }
 
-class _ThrottledCountState extends ConsumerState<ThrottledCount> {
+class _ThrottledCountState extends ConsumerState<ThrottledCount>
+    with
+        RouteMotionHoldMixin<ThrottledCount>,
+        ActiveRefreshMixin<ThrottledCount> {
   late var _count = ref.read(widget.provider);
   late var _latest = _count;
-  Timer? _repaint;
-  var _active = true;
 
   @override
   void initState() {
     super.initState();
     ref.listenManual(widget.provider, (_, next) {
       _latest = next;
-      if (!_active) {
-        return;
-      }
-      _repaint ??= Timer(renderThrottleDuration, _showLatest);
+      scheduleActiveRefresh(_showLatest, delay: renderThrottleDuration);
     });
   }
 
   void _showLatest() {
-    _repaint = null;
-    setState(() => _count = _latest);
-  }
-
-  // A card can stay deactivated across timer ticks; a repaint there throws.
-  @override
-  void deactivate() {
-    _active = false;
-    _repaint?.cancel();
-    _repaint = null;
-    super.deactivate();
-  }
-
-  @override
-  void activate() {
-    super.activate();
-    _active = true;
-    _count = _latest;
-  }
-
-  @override
-  void dispose() {
-    _repaint?.cancel();
-    super.dispose();
+    if (_count != _latest) setState(() => _count = _latest);
   }
 
   @override
@@ -226,11 +200,11 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
         WidgetsBindingObserver,
         ActivePollingMixin<ConnectionsTableCard>,
         RouteMotionHoldMixin<ConnectionsTableCard>,
+        ActiveRefreshMixin<ConnectionsTableCard>,
         ConnectionsPolling<ConnectionsTableCard> {
   var _feed = DashboardFeed.connections;
   List<TrackerInfo> _requests = const [];
   List<DnsQuery> _queries = const [];
-  Timer? _snapshot;
 
   @override
   bool get pollsConnections => _feed == DashboardFeed.connections;
@@ -249,18 +223,12 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
     );
   }
 
-  @override
-  void dispose() {
-    _snapshot?.cancel();
-    super.dispose();
-  }
-
   void _scheduleSnapshot(DashboardFeed feed) {
     if (feed != _feed) return;
-    _snapshot ??= Timer(renderThrottleDuration, () {
-      _snapshot = null;
-      if (mounted) updateWhenRouteSettled(() => setState(_takeSnapshot));
-    });
+    scheduleActiveRefresh(
+      () => setState(_takeSnapshot),
+      delay: renderThrottleDuration,
+    );
   }
 
   void _takeSnapshot() {
